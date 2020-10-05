@@ -29,7 +29,17 @@ public class MyRedis {
                                 out.write("hehe".getBytes());
                                 out.flush();
                             }else{
-                                String[] ss=IsOk(HaveBody(new String(bytes)));
+                                System.out.println(new String(bytes));
+                                String[] str=HaveBody(new String(bytes));
+                                for(String s:str){
+                                    System.out.print(s+" ");
+                                }
+                                System.out.println();
+                                String[] ss=IsOk(str);
+                                for(String s:ss){
+                                    System.out.print(s+" ");
+                                }
+                                System.out.println();
                                 if(!IsError(ss)){
                                     String ok=Last(ss);
                                     out.write(ok.getBytes());
@@ -62,8 +72,10 @@ public class MyRedis {
             String r=this.cache.get(ss[1]);
             if(r==null)
                 return "IS NULL\r\n";
-            else
-                return "+OK\r\n"+r+"\r\n";
+            else{
+                String s="+OK\n"+r+"\r\n";
+                return s;
+            }
         }else{
             return "+ERROR\r\n";
         }
@@ -87,7 +99,7 @@ public class MyRedis {
         }
         int sum=new Integer(String.valueOf(c,0,len-1));
         String[] ret=new String[sum];
-        if(sum*2==s.length-1){
+        if(sum*2<=s.length-1){
             for(int i=1;i<=sum*2;i+=2){
                 int l=IsnOk(s[i]);
                 if(l!=-1){
