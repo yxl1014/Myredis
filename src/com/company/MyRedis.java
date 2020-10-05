@@ -9,7 +9,10 @@ import java.util.HashMap;
 
 public class MyRedis {
     private HashMap<String,String> cache=new HashMap<>();
-    public void Redis(){
+    public void open(){
+        Redis();
+    }
+    private void Redis(){
         try {
             ServerSocket redis=new ServerSocket(6379);
             while(true){
@@ -26,10 +29,19 @@ public class MyRedis {
                                 out.write("hehe".getBytes());
                                 out.flush();
                             }else{
-                                String[] s=HaveBody(new String(bytes));
-                                String[] ss=IsOk(s);
-
+                                String[] ss=IsOk(HaveBody(new String(bytes)));
+                                if(!IsError(ss)){
+                                    String ok=Last(ss);
+                                    out.write(ok.getBytes());
+                                    out.flush();
+                                }else {
+                                    out.write("+ERROR\r\n".getBytes());
+                                    out.flush();
+                                }
                             }
+                            out.close();
+                            in.close();
+                            socket.close();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -41,8 +53,32 @@ public class MyRedis {
         }
     }
 
+    private String Last(String[] ss) {
+        if(ss[0].equals("set")){
+            this.cache.put(ss[1],ss[2]);
+            return "+OK\r\n";
+        }else
+        if(ss[0].equals("get")){
+            String r=this.cache.get(ss[1]);
+            if(r==null)
+                return "IS NULL\r\n";
+            else
+                return "+OK\r\n"+r+"\r\n";
+        }else{
+            return "+ERROR\r\n";
+        }
+    }
+
+    private boolean IsError(String[] ss) {
+        boolean re=false;
+        for(String s:ss){
+            if(s.equals("+ERROR"))
+                re=true;
+        }
+        return re;
+    }
+
     private String[] IsOk(String[] s) {
-        String[] ret=new String[20];
         int sl=0;
         char[] c=s[0].toCharArray();
         int len=c.length;
@@ -50,6 +86,7 @@ public class MyRedis {
             c[i-1]=c[i];
         }
         int sum=new Integer(String.valueOf(c,0,len-1));
+        String[] ret=new String[sum];
         if(sum*2==s.length-1){
             for(int i=1;i<=sum*2;i+=2){
                 int l=IsnOk(s[i]);
@@ -71,7 +108,6 @@ public class MyRedis {
             ret[0]="+ERROR";
             return ret;
         }
-        ret[0]="+ERROR";
         return ret;
     }
 
